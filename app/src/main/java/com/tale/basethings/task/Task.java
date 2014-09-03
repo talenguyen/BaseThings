@@ -9,6 +9,7 @@ public abstract class Task<Result> extends AsyncTask<Object, Object, Result> {
     @Override
     protected void onPostExecute(Result result) {
         super.onPostExecute(result);
+        TaskManager.getInstance().post(result);
         Timber.d("onPostExecute");
         onFinished();
     }

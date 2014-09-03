@@ -3,6 +3,7 @@ package com.tale.basethings.task;
 import android.os.Build;
 import android.util.SparseArray;
 
+import com.squareup.otto.Bus;
 import com.tale.basethings.util.Timber;
 
 /**
@@ -10,9 +11,9 @@ import com.tale.basethings.util.Timber;
  */
 public class TaskManager {
     private static TaskManager sInstance;
-
+    private final Bus mBus;
+    private final SparseArray<Task> mTasks;
     private int mIndex;
-    private SparseArray<Task> mTasks;
 
     public static TaskManager getInstance() {
         if (sInstance == null) {
@@ -24,6 +25,19 @@ public class TaskManager {
     private TaskManager() {
         mIndex = 0;
         mTasks = new SparseArray<Task>();
+        mBus = new Bus();
+    }
+
+    public void registerCallback(Object object) {
+        mBus.register(object);
+    }
+
+    public void unregisterCallback(Object object) {
+        mBus.unregister(object);
+    }
+
+    public void post(Object object) {
+        mBus.post(object);
     }
 
     public synchronized int enqueue(Task task) {

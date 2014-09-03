@@ -1,15 +1,14 @@
 package com.tale.basethings;
 
-import android.app.Activity;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.DialogFragment;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.squareup.otto.Subscribe;
 import com.tale.basethings.activity.LifeCycleFragmentActivity;
 import com.tale.basethings.dialog.AlertDialogFragment;
-import com.tale.basethings.dialog.LoadingDialog;
 import com.tale.basethings.dialog.ProgressDialogFragment;
 import com.tale.basethings.task.Task;
 import com.tale.basethings.task.TaskManager;
@@ -18,8 +17,13 @@ import com.tale.basethings.util.Timber;
 
 public class MainActivity extends LifeCycleFragmentActivity {
 
+    private final TaskManager taskManager;
     private int taskId;
-    ProgressDialogFragment progressDialogFragment = new LoadingDialog();
+    AbsProgressDialogFragment progressDialogFragment = new LoadingDialog();
+
+    public MainActivity() {
+        taskManager = TaskManager.getInstance();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +38,37 @@ public class MainActivity extends LifeCycleFragmentActivity {
     }
 
     private void newDummyTask() {
-        Task task = new Task() {
+//        Task task = new Task() {
+//            @Override
+//            protected void onPreExecute() {
+//                super.onPreExecute();
+//                showProgress(true);
+//            }
+//
+//            @Override
+//            protected Object doInBackground(Object[] params) {
+//                Timber.d("Start a task");
+//                try {
+//                    Thread.sleep(3000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                return null;
+//            }
+//
+//            @Override
+//            protected void onPostExecute(Object o) {
+//                super.onPostExecute(o);
+//                showAlert("Task execute success");
+//            }
+//
+//            @Override
+//            protected void onFinished() {
+//                super.onFinished();
+//                showProgress(false);
+//            }
+//        };
+        Task<Boolean> dummyTask = new Task<Boolean>() {
             @Override
             protected void onPreExecute() {
                 super.onPreExecute();
@@ -42,20 +76,14 @@ public class MainActivity extends LifeCycleFragmentActivity {
             }
 
             @Override
-            protected Object doInBackground(Object[] params) {
-                Timber.d("Start a task");
+            protected Boolean doInBackground(Object... params) {
+
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Object o) {
-                super.onPostExecute(o);
-                showAlert("Task execute success");
+                return Boolean.TRUE;
             }
 
             @Override
@@ -64,7 +92,13 @@ public class MainActivity extends LifeCycleFragmentActivity {
                 showProgress(false);
             }
         };
-        taskId = TaskManager.getInstance().enqueue(task);
+        taskId = taskManager.enqueue(dummyTask);
+    }
+
+    @Subscribe
+    public void onDummyTaskResult(Boolean result) {
+        showProgress(false);
+        showAlert("Task execute success: " + result);
     }
 
     private void showAlert(final String message) {
@@ -77,10 +111,10 @@ public class MainActivity extends LifeCycleFragmentActivity {
     }
 
     void showProgress(boolean show) {
-        ProgressDialogFragment progressDialog = (ProgressDialogFragment) getSupportFragmentManager().findFragmentByTag("progress");
+        DialogFragment progressDialog = (DialogFragment) getSupportFragmentManager().findFragmentByTag("progress");
         if (show) {
             if (progressDialog == null) {
-                progressDialog = new LoadingDialog();
+                progressDialog = ProgressDialogFragment.newInstance("Doing on background", false);
             }
             progressDialog.show(getSupportFragmentManager(), "progress");
         } else {
@@ -92,9 +126,15 @@ public class MainActivity extends LifeCycleFragmentActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        taskManager.registerCallback(this);
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
-//        TaskManager.getInstance().cancelAll();
+        taskManager.unregisterCallback(this);
     }
 
     @Override

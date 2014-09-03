@@ -4,27 +4,43 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.text.TextUtils;
 
 /**
  * Created by TALE on 8/29/2014.
  */
-public abstract class ProgressDialogFragment extends DialogFragment {
+public class ProgressDialogFragment extends DialogFragment {
+
+    private static final String KEY_MSG = "msg";
+    private static final String KEY_CANCELABLE= "msg";
 
     public ProgressDialogFragment() {
+    }
+
+    public static ProgressDialogFragment newInstance(String msg, boolean cancelable) {
+        final ProgressDialogFragment progressDialogFragment = new ProgressDialogFragment();
+        final Bundle args = new Bundle();
+        args.putBoolean(KEY_CANCELABLE, cancelable);
+        if (!TextUtils.isEmpty(msg)) {
+            args.putString(KEY_MSG, msg);
+        }
+        progressDialogFragment.setArguments(args);
+        return progressDialogFragment;
     }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         ProgressDialog dialog = new ProgressDialog(getActivity());
-        if (getMessage() != null) {
-            dialog.setMessage(getMessage());
+        final Bundle args = getArguments();
+        final String msg = args == null ? null : args.getString(KEY_MSG);
+        if (msg != null) {
+            dialog.setMessage(msg);
         } else {
             dialog.setMessage("Loading...");
         }
+        final boolean cancelable = args == null ? false : args.getBoolean(KEY_CANCELABLE, false);
+        dialog.setCancelable(cancelable);
         return dialog;
     }
 
-    public abstract CharSequence getMessage();
-
-    public abstract boolean isCancelable(boolean cancelable);
 }
