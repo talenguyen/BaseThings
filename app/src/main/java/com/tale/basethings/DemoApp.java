@@ -4,12 +4,16 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
 
+import com.squareup.otto.Bus;
 import com.tale.basethings.util.Timber;
 
 /**
  * Created by TALE on 9/3/2014.
  */
 public class DemoApp extends Application {
+
+    private Bus mBus = new Bus();
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -55,5 +59,9 @@ public class DemoApp extends Application {
                 Timber.d(activity + "{onActivityDestroyed}");
             }
         });
+    }
+
+    public Bus getBus() {
+        return mBus;
     }
 }

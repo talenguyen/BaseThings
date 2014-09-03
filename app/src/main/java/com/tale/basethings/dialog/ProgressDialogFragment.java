@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 
 /**
@@ -12,7 +13,7 @@ import android.text.TextUtils;
 public class ProgressDialogFragment extends DialogFragment {
 
     private static final String KEY_MSG = "msg";
-    private static final String KEY_CANCELABLE= "msg";
+    private static final String KEY_CANCELABLE= "cancelable";
 
     public ProgressDialogFragment() {
     }
@@ -26,6 +27,14 @@ public class ProgressDialogFragment extends DialogFragment {
         }
         progressDialogFragment.setArguments(args);
         return progressDialogFragment;
+    }
+
+    public void show(FragmentManager fragmentManager) {
+        DialogFragment progressDialog = (DialogFragment) fragmentManager.findFragmentByTag("progress");
+        if (progressDialog == null) {
+            progressDialog = ProgressDialogFragment.newInstance("Doing on background", false);
+        }
+        progressDialog.show(fragmentManager, "progress");
     }
 
     @Override

@@ -6,6 +6,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 import com.tale.basethings.activity.LifeCycleFragmentActivity;
 import com.tale.basethings.dialog.AlertDialogFragment;
@@ -19,7 +20,7 @@ public class MainActivity extends LifeCycleFragmentActivity {
 
     private final TaskManager taskManager;
     private int taskId;
-    AbsProgressDialogFragment progressDialogFragment = new LoadingDialog();
+    private Bus bus;
 
     public MainActivity() {
         taskManager = TaskManager.getInstance();
@@ -35,6 +36,7 @@ public class MainActivity extends LifeCycleFragmentActivity {
                 newDummyTask();
             }
         });
+        bus = ((DemoApp) getApplication()).getBus();
     }
 
     private void newDummyTask() {
@@ -87,6 +89,12 @@ public class MainActivity extends LifeCycleFragmentActivity {
             }
 
             @Override
+            protected void onPostExecute(Boolean result) {
+                super.onPostExecute(result);
+                bus.post(result);
+            }
+
+            @Override
             protected void onFinished() {
                 super.onFinished();
                 showProgress(false);
@@ -128,13 +136,13 @@ public class MainActivity extends LifeCycleFragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        taskManager.registerCallback(this);
+        bus.register(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        taskManager.unregisterCallback(this);
+        bus.unregister(this);
     }
 
     @Override
