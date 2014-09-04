@@ -1,4 +1,4 @@
-package com.tale.basethings.activity;
+package com.tale.basethings.ui.activity;
 
 import android.app.Activity;
 import android.content.Intent;

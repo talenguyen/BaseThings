@@ -1,26 +1,37 @@
-package com.tale.basethings;
+package com.tale.basethings.ui.activity;
 
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 
+import com.google.common.collect.Lists;
+import com.path.android.jobqueue.Job;
+import com.path.android.jobqueue.JobManager;
+import com.path.android.jobqueue.Params;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
-import com.tale.basethings.activity.LifeCycleFragmentActivity;
+import com.tale.basethings.DemoApp;
+import com.tale.basethings.R;
 import com.tale.basethings.dialog.AlertDialogFragment;
 import com.tale.basethings.dialog.ProgressDialogFragment;
 import com.tale.basethings.task.Task;
 import com.tale.basethings.task.TaskManager;
 import com.tale.basethings.util.Timber;
 
+import java.util.Arrays;
+import java.util.List;
 
-public class MainActivity extends LifeCycleFragmentActivity {
+import javax.inject.Inject;
+
+
+public class MainActivity extends BaseActivity {
 
     private final TaskManager taskManager;
     private int taskId;
-    private Bus bus;
+    @Inject Bus bus;
+    @Inject
+    JobManager jobManager;
 
     public MainActivity() {
         taskManager = TaskManager.getInstance();
@@ -33,43 +44,20 @@ public class MainActivity extends LifeCycleFragmentActivity {
         findViewById(R.id.btNewTask).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                newDummyTask();
+                newDummyTaskWithJobQueue();
             }
         });
         bus = ((DemoApp) getApplication()).getBus();
     }
 
+    @Override
+    protected List<Object> getModules() {
+        List<Object> modules = Lists.newArrayList();
+        modules.add(new MainActivityModule());
+        return modules;
+    }
+
     private void newDummyTask() {
-//        Task task = new Task() {
-//            @Override
-//            protected void onPreExecute() {
-//                super.onPreExecute();
-//                showProgress(true);
-//            }
-//
-//            @Override
-//            protected Object doInBackground(Object[] params) {
-//                Timber.d("Start a task");
-//                try {
-//                    Thread.sleep(3000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                return null;
-//            }
-//
-//            @Override
-//            protected void onPostExecute(Object o) {
-//                super.onPostExecute(o);
-//                showAlert("Task execute success");
-//            }
-//
-//            @Override
-//            protected void onFinished() {
-//                super.onFinished();
-//                showProgress(false);
-//            }
-//        };
         Task<Boolean> dummyTask = new Task<Boolean>() {
             @Override
             protected void onPreExecute() {
@@ -101,6 +89,36 @@ public class MainActivity extends LifeCycleFragmentActivity {
             }
         };
         taskId = taskManager.enqueue(dummyTask);
+    }
+
+    private void newDummyTaskWithJobQueue() {
+        Job job = new Job(new Params(1).requireNetwork().persist()) {
+            @Override
+            public void onAdded() {
+                Timber.d("onAdded");
+            }
+
+            @Override
+            public void onRun() throws Throwable {
+                Timber.d("onRun");
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            protected void onCancel() {
+                Timber.d("onCancel");
+            }
+
+            @Override
+            protected boolean shouldReRunOnThrowable(Throwable throwable) {
+                return true;
+            }
+        };
+        jobManager.addJob(job);
     }
 
     @Subscribe
@@ -150,17 +168,5 @@ public class MainActivity extends LifeCycleFragmentActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 }

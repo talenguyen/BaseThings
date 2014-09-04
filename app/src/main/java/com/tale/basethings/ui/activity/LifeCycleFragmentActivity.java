@@ -1,6 +1,5 @@
-package com.tale.basethings.activity;
+package com.tale.basethings.ui.activity;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
